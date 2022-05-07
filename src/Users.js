@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
+import useAsync from './useAsync';
+import User from './User';
+
+async function getUsers() {
+  const res = await axios.get(
+    'https://jsonplaceholder.typicode.com/users'
+  );
+  return res.data;
+}
 
 const Users = () => {
-  const [users, setUsers] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [state, refetch] = useAsync(getUsers, [], true);
 
-    const fetchUsers = async () => {
-      try {
-        // 요청이 시작 할 때에는 error와 users 를 초기화
-        setError(null);
-        setUsers(null);
-        // loading 상태를 true 로 바꾼다.
-        setLoading(true);
-        const response = await axios.get(
-          'https://jsonplaceholder.typicode.com/users'
-        );
-        setUsers(response.data);
-      } catch (e) {
-        setError(e);
-      }
-      setLoading(false);
-    };
-
-  useEffect(() => {
-    fetchUsers();
-  }, [])
+  const { loading, data: users, error } = state;
 
   if (loading) {
     return <div>로딩중...</div>
@@ -36,19 +25,20 @@ const Users = () => {
   };
 
   if (!users) {
-    return null;
+    return <button onClick={refetch}>불러오기</button>;
   };
 
   return (
     <>
       <ul>
         {users.map(user => (
-          <li key={user.id}>
+          <li key={user.id} onClick={() => setUserId(user.id)} stlye={{ cursor: 'pointer' }}>
             {user.username} ({user.name})
           </li>
         ))}
       </ul>
-      <button onClick={fetchUsers}>다시 불러오기</button>
+      <button onClick={refetch}>다시 불러오기</button>
+      {userId && <User id={userId}/>}
     </>
   );
 };
